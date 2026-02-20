@@ -1,0 +1,54 @@
+import { Mail } from "./schema";
+import { addHours, subDays, subHours } from "date-fns";
+
+const NOW = new Date();
+
+export const MOCK_MAILS: Mail[] = [
+  {
+    id: "uuid-1",
+    reference: "ARR-2024-02-19-0042",
+    receivedAt: subHours(NOW, 2),
+    sender: "Ministère de l'Intérieur",
+    senderOrganization: "Cabinet du Ministre",
+    recipientService: "Commissariat Central",
+    object: "Note circulaire sur le renforcement de la sécurité - CAN 2025",
+    type: "COURRIER_ARRIVEE",
+    priority: "TRES_URGENT",
+    confidentiality: "CONFIDENTIEL",
+    status: "EN_TRAITEMENT",
+    pageCount: 12,
+    registeredBy: "SGT. KOUASSI",
+    scanUrl: "/docs/note-minis.pdf"
+  },
+  {
+    id: "uuid-2",
+    reference: "INT-2024-02-18-0115",
+    receivedAt: subDays(NOW, 1),
+    sender: "Capitaine TOURE",
+    recipientService: "Ressources Humaines",
+    object: "Demande de congés annuels - SGT. BLE",
+    type: "NOTE_INTERNE",
+    priority: "NORMAL",
+    confidentiality: "NORMAL",
+    status: "TRANSMIS",
+    pageCount: 1,
+    registeredBy: "ADC. FOFANA",
+    scanUrl: "/docs/demande-conges.pdf"
+  },
+  {
+    id: "uuid-3",
+    reference: "ARR-2024-02-19-0055",
+    receivedAt: subHours(NOW, 0.5),
+    sender: "Mme KONE Aïcha",
+    senderOrganization: "Citoyenne",
+    recipientService: "Plaintes & Enquêtes",
+    object: "Dépôt de plainte contre X pour vol de véhicule",
+    type: "COURRIER_ARRIVEE",
+    priority: "URGENT",
+    confidentiality: "NORMAL",
+    status: "ENREGISTRE",
+    pageCount: 3,
+    registeredBy: "SGT. KOUASSI",
+    scanUrl: "/docs/plainte-kone.pdf"
+  }
+];
