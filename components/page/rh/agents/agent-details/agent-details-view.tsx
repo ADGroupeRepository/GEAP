@@ -4,12 +4,30 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Agent } from "../agents-table/schema";
 import { AgentHeader } from "./agent-header";
 import { PersonalInfos } from "./personal-infos";
+import { DossiersTabContent } from "./dossiers/dossiers-tab-content";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
 interface AgentDetailsViewProps {
   agent: Agent;
 }
 
 export function AgentDetailsView({ agent }: Readonly<AgentDetailsViewProps>) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const currentTab = searchParams.get("tab") || "infos";
+
+  const handleTabChange = (value: string) => {
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", value);
+    // Supprimer le paramètre dossier si on quitte l'onglet dossiers
+    if (value !== "dossiers") {
+      params.delete("dossier");
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
+
   return (
     <div className="space-y-6">
       <AgentHeader
@@ -19,7 +37,11 @@ export function AgentDetailsView({ agent }: Readonly<AgentDetailsViewProps>) {
         matricule={agent.matricule}
       />
 
-      <Tabs defaultValue="infos" className="w-full">
+      <Tabs
+        value={currentTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
         <TabsList className="w-[50%] group-data-horizontal/tabs:h-11">
           <TabsTrigger value="infos">Identification du personnel</TabsTrigger>
           <TabsTrigger value="dossiers">Liste des dossiers</TabsTrigger>
@@ -28,11 +50,8 @@ export function AgentDetailsView({ agent }: Readonly<AgentDetailsViewProps>) {
         <TabsContent value="infos" className="mt-0">
           <PersonalInfos agent={agent} />
         </TabsContent>
-        <TabsContent
-          value="dossiers"
-          className="min-h-[400px] flex items-center justify-center border rounded-lg border-dashed"
-        >
-          <p className="text-muted-foreground">Liste des dossiers vide</p>
+        <TabsContent value="dossiers" className="mt-0">
+          <DossiersTabContent />
         </TabsContent>
       </Tabs>
     </div>
