@@ -5,10 +5,10 @@ import { Search } from "lucide-react";
 export async function Navbar() {
   return (
     <>
-      <div className="h-[69px] sticky top-0"></div>
+      <div className="min-h-[69px] w-20 sticky top-0"></div>
       <div
         style={{ width: "calc(100vw - 265px)" }}
-        className="h-[69px] flex justify-between items-center border-b px-4 fixed top-0 z-40 bg-background"
+        className="h-[69px] max-h-[69px] flex justify-between items-center border-b px-4 fixed top-0 z-40 bg-background"
       >
         <div className="relative">
           <Search className="size-5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />

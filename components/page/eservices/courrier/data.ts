@@ -18,7 +18,8 @@ export const MOCK_MAILS: Mail[] = [
     status: "EN_TRAITEMENT",
     pageCount: 12,
     registeredBy: "SGT. KOUASSI",
-    scanUrl: "/docs/note-minis.pdf"
+    scanUrl: "/docs/note-minis.pdf",
+    read: false,
   },
   {
     id: "uuid-2",
@@ -33,7 +34,8 @@ export const MOCK_MAILS: Mail[] = [
     status: "TRANSMIS",
     pageCount: 1,
     registeredBy: "ADC. FOFANA",
-    scanUrl: "/docs/demande-conges.pdf"
+    scanUrl: "/docs/demande-conges.pdf",
+    read: false,
   },
   {
     id: "uuid-3",
@@ -49,6 +51,7 @@ export const MOCK_MAILS: Mail[] = [
     status: "ENREGISTRE",
     pageCount: 3,
     registeredBy: "SGT. KOUASSI",
-    scanUrl: "/docs/plainte-kone.pdf"
-  }
+    scanUrl: "/docs/plainte-kone.pdf",
+    read: false,
+  },
 ];
