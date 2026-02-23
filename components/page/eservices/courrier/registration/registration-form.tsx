@@ -18,8 +18,67 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SecurityBadge } from "./security-badge";
-import { Scan, UploadCloud, CheckCircle2, Printer } from "lucide-react";
+import {
+  Scan,
+  UploadCloud,
+  CheckCircle2,
+  Printer,
+  ArrowRight,
+  ArrowLeft,
+  FileText,
+  X,
+  User,
+  Building2,
+  Send,
+} from "lucide-react";
 import { mailSchema } from "../schema";
+import { cn } from "@/lib/utils";
+
+// ─── DATA: Services & Personnel ───
+const SERVICES_DATA = [
+  {
+    id: "commissariat-central",
+    name: "Commissariat Central",
+    personnel: [
+      { id: "p1", name: "Commissaire DIALLO Ibrahim" },
+      { id: "p2", name: "Capitaine TOURE Mamadou" },
+      { id: "p3", name: "Lieutenant KOFFI Jean" },
+    ],
+  },
+  {
+    id: "ressources-humaines",
+    name: "Ressources Humaines",
+    personnel: [
+      { id: "p4", name: "Commandant BAMBA Adama" },
+      { id: "p5", name: "Adjudant FOFANA Seydou" },
+    ],
+  },
+  {
+    id: "police-judiciaire",
+    name: "Police Judiciaire",
+    personnel: [
+      { id: "p6", name: "Commissaire COULIBALY Drissa" },
+      { id: "p7", name: "Capitaine N'GUESSAN Yao" },
+      { id: "p8", name: "Lieutenant OUATTARA Lassina" },
+    ],
+  },
+  {
+    id: "secretariat",
+    name: "Secrétariat",
+    personnel: [
+      { id: "p9", name: "Sergent KOUASSI Amoin" },
+      { id: "p10", name: "Agent SYLLA Mariam" },
+    ],
+  },
+  {
+    id: "direction-logistique",
+    name: "Direction Logistique",
+    personnel: [
+      { id: "p11", name: "Commandant TRAORE Moussa" },
+      { id: "p12", name: "Capitaine KONAN Kouadio" },
+    ],
+  },
+];
 
 // Schema partiel pour le formulaire (sans les champs auto-générés)
 const formSchema = mailSchema
@@ -28,21 +87,32 @@ const formSchema = mailSchema
     senderOrganization: true,
     recipientService: true,
     object: true,
-    type: true,
     priority: true,
+    senderType: true,
+    officialName: true,
+    identificationNumber: true,
+    phone: true,
+    email: true,
   })
   .extend({
-    // On ajoute des champs spécifiques au formulaire si besoin
+    recipientPerson: z.string().optional(),
   });
 
 type FormData = z.infer<typeof formSchema>;
 
-export function RegistrationForm() {
-  const [step, setStep] = useState<"SCAN" | "DETAILS" | "SUCCESS">("SCAN");
-  const [isScanning, setIsScanning] = useState(false);
+interface RegistrationFormProps {
+  onCancel?: () => void;
+}
+
+export function RegistrationForm({
+  onCancel,
+}: Readonly<RegistrationFormProps>) {
+  const [step, setStep] = useState<1 | 2>(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [scannedFile, setScannedFile] = useState<File | null>(null);
   const [generatedRef, setGeneratedRef] = useState<string | undefined>();
-  const [showPdf, setShowPdf] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [selectedServiceId, setSelectedServiceId] = useState<string>("");
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<FormData>({
@@ -53,75 +123,63 @@ export function RegistrationForm() {
     },
   });
 
-  const handleTriggerScan = () => {
-    fileInputRef.current?.click();
-  };
+  const selectedService = SERVICES_DATA.find((s) => s.id === selectedServiceId);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setIsScanning(true);
-      // Simulation "Analyse & Sécurisation"
-      setTimeout(() => {
-        setIsScanning(false);
-        setScannedFile(file);
-        setStep("DETAILS");
-        setTimeout(() => setShowPdf(true), 500); // Delay PDF rendering for smooth transition
-      }, 1500);
+    if (file) setScannedFile(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer?.files?.[0];
+    if (file?.type === "application/pdf") setScannedFile(file);
+  };
+
+  const handleNextStep = async () => {
+    const isValid = await form.trigger();
+    if (isValid) {
+      setStep(2);
+    }
+  };
+
+  const handleServiceChange = (serviceId: string) => {
+    setSelectedServiceId(serviceId);
+    const service = SERVICES_DATA.find((s) => s.id === serviceId);
+    if (service) {
+      form.setValue("recipientService", service.name);
+      form.setValue("recipientPerson", "");
     }
   };
 
   const onSubmit = async (data: FormData) => {
-    console.log(data);
-    // Simulation d'envoi et génération ID
-    setIsScanning(true); // Réutilisation pour le loader
+    console.log(data, scannedFile);
+    setIsSubmitting(true);
     setTimeout(() => {
-      setIsScanning(false);
+      setIsSubmitting(false);
       const uniqueId = `ARR-${format(new Date(), "yyyy-MM-dd")}-${Math.floor(
         Math.random() * 1000,
       )
         .toString()
         .padStart(4, "0")}`;
       setGeneratedRef(uniqueId);
-      setStep("SUCCESS");
+      setShowSuccess(true);
     }, 1500);
   };
 
   const resetForm = () => {
     setScannedFile(null);
-    setShowPdf(false);
     setGeneratedRef(undefined);
+    setShowSuccess(false);
+    setStep(1);
+    setSelectedServiceId("");
     form.reset();
   };
 
-  const previewContent = React.useMemo(() => {
-    if (!scannedFile) return null;
-    if (scannedFile.type !== "application/pdf") {
-      return (
-        <div className="flex h-full items-center justify-center text-muted-foreground">
-          Aperçu non disponible
-        </div>
-      );
-    }
-    if (showPdf) {
-      return (
-        <iframe
-          src={URL.createObjectURL(scannedFile) + "#toolbar=0&navpanes=0"}
-          className="w-full h-full animate-in fade-in duration-500"
-          title="Aperçu"
-        />
-      );
-    }
+  // ─── SUCCESS SCREEN ───
+  if (showSuccess) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Scan className="h-10 w-10 text-slate-300 animate-pulse" />
-      </div>
-    );
-  }, [scannedFile, showPdf]);
-
-  if (step === "SUCCESS") {
-    return (
-      <div className="flex flex-col items-center justify-center p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col items-center justify-center p-8 space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
         <div className="h-20 w-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
           <CheckCircle2 className="h-10 w-10 text-green-600 dark:text-green-400" />
         </div>
@@ -150,147 +208,416 @@ export function RegistrationForm() {
   }
 
   return (
-    <div className="flex h-full">
-      {/* Colonne Gauche : Zone de Document (Upload ou Preview) */}
-      <div
-        className={`${
-          scannedFile ? "w-1/2" : "w-full"
-        } transition-all duration-500 ease-in-out bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col relative group`}
-      >
-        {scannedFile ? (
-          // Mode Preview (Full Height, No Header)
-          <div className="flex-1 bg-slate-200 dark:bg-slate-950 relative">
-            {previewContent}
-
-            {/* Petit overlay technique discret en bas */}
-            <div className="absolute bottom-0 inset-x-0 bg-slate-900/80 backdrop-blur-sm text-white text-[10px] p-2 flex justify-between items-center px-4 font-mono opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <span>{scannedFile.name}</span>
-              <span>{(scannedFile.size / 1024 / 1024).toFixed(2)} MB</span>
-            </div>
+    <div className="flex flex-col h-full">
+      {/* Header with stepper */}
+      <div className="px-6 py-4 border-b space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-lg">Nouveau Courrier</h2>
+          <div className="flex items-center gap-2">
+            {step === 1 ? (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={onCancel}
+                  className="gap-1.5"
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={handleNextStep}
+                >
+                  Suivant
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setStep(1)}
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  Retour
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="gap-1.5"
+                  disabled={isSubmitting || !scannedFile}
+                  onClick={form.handleSubmit(onSubmit)}
+                >
+                  {isSubmitting ? "Traitement..." : "Valider"}
+                  {!isSubmitting && <CheckCircle2 className="h-3.5 w-3.5" />}
+                </Button>
+              </>
+            )}
           </div>
-        ) : (
-          // Mode Upload
-          <button
-            onClick={handleTriggerScan}
-            className="flex-1 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors p-8 text-center"
-          >
-            <div className="h-32 w-32 bg-white dark:bg-slate-900 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-center mb-8 group-hover:scale-105 transition-transform duration-300">
-              {isScanning ? (
-                <Scan className="h-12 w-12 text-primary animate-spin" />
-              ) : (
-                <UploadCloud className="h-12 w-12 text-slate-300 dark:text-slate-600 group-hover:text-primary transition-colors" />
+        </div>
+        {/* Stepper */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                "h-7 w-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors",
+                step >= 1
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground",
               )}
+            >
+              1
             </div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-              {isScanning ? "Numérisation..." : "Numériser un courrier"}
-            </h3>
-            <p className="text-sm text-slate-500 max-w-xs">
-              Cliquez ici pour scanner ou déposer un fichier PDF entrant.
-            </p>
-            <input
-              type="file"
-              ref={fileInputRef}
-              className="hidden"
-              accept="application/pdf"
-              onChange={handleFileChange}
-            />
-          </button>
-        )}
+            <span
+              className={cn(
+                "text-sm font-medium",
+                step >= 1 ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              Informations
+            </span>
+          </div>
+          <div className="h-px flex-1 bg-border" />
+          <div className="flex items-center gap-2">
+            <div
+              className={cn(
+                "h-7 w-7 rounded-full flex items-center justify-center text-xs font-medium transition-colors",
+                step >= 2
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground",
+              )}
+            >
+              2
+            </div>
+            <span
+              className={cn(
+                "text-sm font-medium",
+                step >= 2 ? "text-foreground" : "text-muted-foreground",
+              )}
+            >
+              Document PDF
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Colonne Droite : Formulaire */}
-      <div
-        className={`${
-          scannedFile
-            ? "w-1/2 opacity-100"
-            : "w-0 opacity-0 overflow-hidden pointer-events-none"
-        } transition-all duration-500 ease-in-out flex flex-col bg-white dark:bg-slate-950`}
-      >
-        <div className="h-16 flex items-center px-8 border-b">
-          <h2 className="font-semibold text-lg">Enregistrement du courrier</h2>
-        </div>
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        {step === 1 ? (
+          /* ─── STEP 1: FORM INPUTS ─── */
+          <div className="p-6 space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            {/* ── Section: Expéditeur ── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                <User className="h-4 w-4" />
+                Expéditeur
+              </div>
 
-        <div
-          className={`flex-1 overflow-y-auto pt-8 ${
-            scannedFile ? "" : "opacity-50 pointer-events-none grayscale"
-          } transition-all duration-500`}
-        >
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className=" mx-auto h-full relative"
-          >
-            <div className="px-8 space-y-10">
               <div className="space-y-1.5">
-                <Label>Expéditeur</Label>
+                <Label>Nom de l&apos;expéditeur *</Label>
                 <Input
                   placeholder="Nom complet"
                   {...form.register("sender")}
                   className="h-11"
                 />
+                {form.formState.errors.sender && (
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.sender.message}
+                  </p>
+                )}
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Type de structure</Label>
+                  <Select
+                    onValueChange={(val) =>
+                      form.setValue("senderType", val as FormData["senderType"])
+                    }
+                  >
+                    <SelectTrigger className="w-full data-[size=default]:h-11">
+                      <SelectValue placeholder="Sélectionner..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="PERSONNE">Personne</SelectItem>
+                      <SelectItem value="ENTREPRISE">Entreprise</SelectItem>
+                      <SelectItem value="ADMINISTRATION">
+                        Administration
+                      </SelectItem>
+                      <SelectItem value="ONG">ONG</SelectItem>
+                      <SelectItem value="AUTRE">Autre</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Nom officiel</Label>
+                  <Input
+                    placeholder="Nom officiel de la structure"
+                    {...form.register("officialName")}
+                    className="h-11"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1.5">
-                <Label>Organisation</Label>
+                <Label>Numéro d&apos;identification</Label>
                 <Input
-                  placeholder="Structure"
-                  {...form.register("senderOrganization")}
+                  placeholder="Ex: RCCM, NCC, CNI..."
+                  {...form.register("identificationNumber")}
                   className="h-11"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Destination</Label>
-                <Select
-                  onValueChange={(val) =>
-                    form.setValue("recipientService", val)
-                  }
-                >
-                  <SelectTrigger className="w-full data-[size=default]:h-11">
-                    <SelectValue placeholder="Service..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Commissariat Central">
-                      Commissariat Central
-                    </SelectItem>
-                    <SelectItem value="Ressources Humaines">
-                      Ressources Humaines
-                    </SelectItem>
-                    <SelectItem value="Police Judiciaire">
-                      Police Judiciaire
-                    </SelectItem>
-                    <SelectItem value="Secrétariat">Secrétariat</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Téléphone</Label>
+                  <Input
+                    type="tel"
+                    placeholder="+225 XX XX XX XX XX"
+                    {...form.register("phone")}
+                    className="h-11"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    placeholder="email@exemple.com"
+                    {...form.register("email")}
+                    className="h-11"
+                  />
+                </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label>Objet</Label>
-                <Textarea
-                  className="min-h-[120px]"
-                  placeholder="Objet du courrier..."
-                  {...form.register("object")}
+                <Label>Organisation</Label>
+                <Input
+                  placeholder="Structure / Organisation"
+                  {...form.register("senderOrganization")}
+                  className="h-11"
                 />
               </div>
             </div>
 
-            <div className="pt-6 pb-4 px-8 flex items-center gap-4 absolute bottom-0 w-full border-t">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 h-12"
-                onClick={resetForm}
-              >
-                Annuler
-              </Button>
-              <Button
-                type="submit"
-                className="flex-2 h-12"
-                disabled={isScanning || !scannedFile}
-              >
-                {isScanning ? "Traitement..." : "Valider l'enregistrement"}
-              </Button>
+            <div className="h-px bg-border" />
+
+            {/* ── Section: Destinataire ── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                <Send className="h-4 w-4" />
+                Destinataire
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Service destinataire *</Label>
+                <Select onValueChange={handleServiceChange}>
+                  <SelectTrigger className="w-full data-[size=default]:h-11">
+                    <SelectValue placeholder="Choisir un service..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SERVICES_DATA.map((service) => (
+                      <SelectItem key={service.id} value={service.id}>
+                        {service.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.recipientService && (
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.recipientService.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Personne destinataire</Label>
+                <Select
+                  disabled={!selectedServiceId}
+                  onValueChange={(val) => form.setValue("recipientPerson", val)}
+                >
+                  <SelectTrigger className="w-full data-[size=default]:h-11">
+                    <SelectValue
+                      placeholder={
+                        selectedServiceId
+                          ? "Choisir une personne..."
+                          : "Sélectionnez d'abord un service"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">
+                      <span className="font-medium">👥 Tout le service</span>
+                    </SelectItem>
+                    {selectedService?.personnel.map((person) => (
+                      <SelectItem key={person.id} value={person.id}>
+                        {person.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </form>
-        </div>
+
+            <div className="h-px bg-border" />
+
+            {/* ── Section: Courrier ── */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                <Building2 className="h-4 w-4" />
+                Courrier
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Objet *</Label>
+                <Textarea
+                  className="min-h-[100px]"
+                  placeholder="Objet du courrier..."
+                  {...form.register("object")}
+                />
+                {form.formState.errors.object && (
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.object.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Priorité</Label>
+                {(() => {
+                  const currentPriority = form.watch("priority") || "NORMAL";
+                  const options = [
+                    {
+                      value: "NORMAL",
+                      label: "Normal",
+                      color:
+                        "bg-slate-100 border-slate-300 text-slate-700 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300",
+                    },
+                    {
+                      value: "URGENT",
+                      label: "Urgent",
+                      color:
+                        "bg-orange-50 border-orange-300 text-orange-700 dark:bg-orange-950 dark:border-orange-700 dark:text-orange-300",
+                    },
+                    {
+                      value: "TRES_URGENT",
+                      label: "Très Urgent",
+                      color:
+                        "bg-red-50 border-red-300 text-red-700 dark:bg-red-950 dark:border-red-700 dark:text-red-300",
+                    },
+                  ];
+                  return (
+                    <div className="flex items-center gap-3">
+                      {options.map((option) => {
+                        const isSelected = currentPriority === option.value;
+                        return (
+                          <button
+                            key={option.value}
+                            type="button"
+                            onClick={() =>
+                              form.setValue(
+                                "priority",
+                                option.value as FormData["priority"],
+                              )
+                            }
+                            className={cn(
+                              "flex-1 h-11 rounded-lg border-2 text-sm font-medium transition-all",
+                              isSelected
+                                ? option.color +
+                                    " ring-2 ring-offset-1 ring-primary/30"
+                                : "bg-background border-border text-muted-foreground hover:border-primary/40",
+                            )}
+                          >
+                            {option.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* ─── STEP 2: PDF UPLOAD ─── */
+          <div className="p-6 space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
+            {scannedFile ? (
+              <div className="space-y-4">
+                {/* File info card */}
+                <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border">
+                  <div className="h-10 w-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-red-600 dark:text-red-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">
+                      {scannedFile.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {(scannedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setScannedFile(null)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* PDF Preview */}
+                {scannedFile.type === "application/pdf" && (
+                  <div className="border rounded-lg overflow-hidden bg-white dark:bg-slate-900">
+                    <iframe
+                      src={
+                        URL.createObjectURL(scannedFile) +
+                        "#toolbar=0&navpanes=0"
+                      }
+                      className="w-full h-[400px] animate-in fade-in duration-500"
+                      title="Aperçu"
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg p-12 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors min-h-[300px]"
+              >
+                <div className="h-20 w-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                  <UploadCloud className="h-10 w-10 text-slate-400" />
+                </div>
+                <h3 className="text-base font-semibold mb-2">
+                  Déposer le fichier PDF ici
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  ou cliquez pour parcourir vos fichiers
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Format accepté : PDF uniquement
+                </p>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="application/pdf"
+                  onChange={handleFileChange}
+                />
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

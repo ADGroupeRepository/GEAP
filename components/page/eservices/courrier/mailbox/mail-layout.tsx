@@ -1,51 +1,124 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Archive, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { MailProvider } from "./use-mail";
+import { MailProvider, useMail } from "./use-mail";
 import { MailNav } from "./mail-nav";
 import { Separator } from "@/components/ui/separator";
 import { MailList } from "./mail-list";
 import { MailDisplay } from "./mail-display";
+import { RegistrationForm } from "../registration/registration-form";
 
-export function MailLayout() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+function MailLayoutContent() {
+  const [isCollapsed] = useState(false);
+  const { selectedMailId, selectedMails, setSelectedMails, filter, setFilter } =
+    useMail();
+
+  const isOpen = !!selectedMailId;
+  const isRegister = filter === "register";
 
   return (
-    <MailProvider>
-      <div className="flex h-full flex-col md:flex-row">
-        {/* Sidebar */}
-        <div className="w-[250px] border-r flex flex-col h-full overflow-hidden min-h-0 bg-slate-50/50 dark:bg-slate-900/50">
-          <div className="p-4 flex items-center justify-between">
-            <span className="font-bold text-lg tracking-tight">Messagerie</span>
-          </div>
-          <div className="px-4 pb-4">
-            <Button asChild className="w-full gap-2 font-semibold shadow-sm">
-              <Link href="/eservices/courrier/register">
-                <PlusCircle className="h-4 w-4" />
-                Nouveau Courrier
-              </Link>
-            </Button>
-          </div>
-          <Separator />
-          <MailNav isCollapsed={isCollapsed} />
+    <div className="flex h-full flex-col md:flex-row">
+      {/* Sidebar */}
+      <div className="w-[250px] border-r flex flex-col h-full overflow-hidden min-h-0">
+        <div className="px-3 pt-3 pb-5 flex items-center justify-between">
+          <span className="font-semibold text-xl tracking-tight">
+            Correspondance
+          </span>
         </div>
+        <div className="px-3 pb-3 pt-1">
+          <Button
+            className="w-full gap-2 font-semibold"
+            onClick={() => setFilter("register")}
+          >
+            <PlusCircle className="h-4 w-4" />
+            Nouveau Courrier
+          </Button>
+        </div>
+        <Separator />
+        <MailNav isCollapsed={isCollapsed} />
+      </div>
 
-        {/* Mail List */}
-        <div className="w-[350px] border-r flex flex-col h-full overflow-hidden min-h-0 bg-white dark:bg-slate-950">
-          <div className="p-4 py-3 border-b">
-            <h2 className="text-xl font-bold">Boîte de réception</h2>
+      {/* Content Area — sliding panels */}
+      <div className="flex-1 overflow-hidden min-h-0 relative">
+        {/* Mail List — slides left when mail is opened */}
+        <div
+          className="absolute inset-0 flex flex-col bg-white dark:bg-slate-950 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+          style={{
+            transform:
+              isOpen || isRegister ? "translateX(-30%)" : "translateX(0)",
+            opacity: isOpen || isRegister ? 0 : 1,
+            pointerEvents: isOpen || isRegister ? "none" : "auto",
+          }}
+        >
+          <div className="px-4 h-[57.5px] border-b flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-semibold">Boîte de réception</h2>
+              {selectedMails.length > 0 && (
+                <span className="text-sm text-muted-foreground bg-muted px-2 py-0.5 rounded-full font-medium">
+                  {selectedMails.length} sélectionné(s)
+                </span>
+              )}
+            </div>
+
+            {selectedMails.length > 0 && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedMails([])}
+                >
+                  Annuler
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Archive className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Archiver</span>
+                </Button>
+                <Button variant="destructive" size="sm">
+                  <Trash2 className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Supprimer</span>
+                </Button>
+              </div>
+            )}
           </div>
           <MailList />
         </div>
 
-        {/* Mail Display */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden min-h-0 bg-white dark:bg-slate-950">
+        {/* Mail Display — slides in from right */}
+        <div
+          className="absolute inset-0 flex flex-col bg-white dark:bg-slate-950 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+          style={{
+            transform:
+              isOpen && !isRegister ? "translateX(0)" : "translateX(30%)",
+            opacity: isOpen && !isRegister ? 1 : 0,
+            pointerEvents: isOpen && !isRegister ? "auto" : "none",
+          }}
+        >
           <MailDisplay />
         </div>
+
+        {/* Registration Form — slides in from right */}
+        <div
+          className="absolute inset-0 flex flex-col bg-white dark:bg-slate-950 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+          style={{
+            transform: isRegister ? "translateX(0)" : "translateX(30%)",
+            opacity: isRegister ? 1 : 0,
+            pointerEvents: isRegister ? "auto" : "none",
+          }}
+        >
+          <RegistrationForm onCancel={() => setFilter("inbox")} />
+        </div>
       </div>
+    </div>
+  );
+}
+
+export function MailLayout() {
+  return (
+    <MailProvider>
+      <MailLayoutContent />
     </MailProvider>
   );
 }
+
