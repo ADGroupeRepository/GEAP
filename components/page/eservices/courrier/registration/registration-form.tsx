@@ -118,7 +118,6 @@ export function RegistrationForm({
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      type: "COURRIER_ARRIVEE",
       priority: "NORMAL",
     },
   });
