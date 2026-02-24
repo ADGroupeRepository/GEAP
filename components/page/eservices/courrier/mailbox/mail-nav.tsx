@@ -1,20 +1,19 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
 import {
   Inbox,
   FileText,
   Send,
   Trash2,
   Archive,
-  Users2,
-  AlertCircle,
-  MessagesSquare,
+  Star,
+  Settings,
+  Users,
+  MessageSquare,
   type LucideIcon,
 } from "lucide-react";
 import { useMail } from "./use-mail";
-import { Separator } from "@/components/ui/separator";
 
 interface MailNavProps {
   isCollapsed: boolean;
@@ -52,6 +51,13 @@ export function MailNav({ isCollapsed }: Readonly<MailNavProps>) {
       onClick: () => setFilter("sent"),
     },
     {
+      title: "Favoris",
+      label: "",
+      icon: Star,
+      variant: filter === "favorites" ? "default" : "ghost",
+      onClick: () => setFilter("favorites"),
+    },
+    {
       title: "Corbeille",
       label: "",
       icon: Trash2,
@@ -65,33 +71,51 @@ export function MailNav({ isCollapsed }: Readonly<MailNavProps>) {
       variant: filter === "archive" ? "default" : "ghost",
       onClick: () => setFilter("archive"),
     },
+    {
+      title: "Correspondant",
+      label: "",
+      icon: Users,
+      variant: filter === "correspondent" ? "default" : "ghost",
+      onClick: () => setFilter("correspondent"),
+    },
+    {
+      title: "Discussions",
+      label: "",
+      icon: MessageSquare,
+      variant: filter === "discussions" ? "default" : "ghost",
+      onClick: () => setFilter("discussions"),
+    },
   ];
 
   return (
     <div
       data-collapsed={isCollapsed}
-      className="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2"
+      className="group flex flex-col flex-1 gap-4 py-2 data-[collapsed=true]:py-2"
     >
       <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
         {links.map((link, index) => (
           <button
-            key={index}
+            key={index + "index"}
             onClick={link.onClick}
             className={cn(
-              buttonVariants({ variant: link.variant, size: "sm" }),
-              link.variant === "default" &&
-                "dark:bg-muted dark:text-white dark:hover:bg-muted dark:hover:text-white",
-              "justify-start",
+              "flex items-center gap-x-2 rounded-lg w-full h-10 text-[13px] transition-colors cursor-pointer",
+              link.variant === "default"
+                ? "bg-slate-100 pl-1  dark:bg-slate-800 text-slate-900 dark:text-white font-medium"
+                : "hover:bg-slate-100 pl-4 py-2 text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white",
             )}
           >
-            <link.icon className="mr-2 h-4 w-4" />
-            {link.title}
+            {link.variant === "default" && (
+              <div className="h-8 w-1 rounded bg-primary"></div>
+            )}
+            <link.icon className="h-4 w-4" />
+            <span>{link.title}</span>
             {link.label && (
               <span
                 className={cn(
-                  "ml-auto",
-                  link.variant === "default" &&
-                    "text-background dark:text-white",
+                  "ml-auto mr-2 font-medium text-xs",
+                  link.variant === "default"
+                    ? "text-slate-900 dark:text-white"
+                    : "text-slate-500 dark:text-slate-400",
                 )}
               >
                 {link.label}
@@ -100,42 +124,17 @@ export function MailNav({ isCollapsed }: Readonly<MailNavProps>) {
           </button>
         ))}
       </nav>
-      <Separator />
-      <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
-        <span className="px-4 text-xs font-semibold text-muted-foreground my-2">
-          Dossiers
-        </span>
+      <div className="mt-auto px-2">
         <button
-          onClick={() => {}}
           className={cn(
-            buttonVariants({ variant: "ghost", size: "sm" }),
-            "justify-start",
+            "flex items-center gap-x-2 rounded-lg w-full text-[13px] transition-colors",
+            "hover:bg-slate-100 pl-4 py-2 text-slate-600 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white",
           )}
         >
-          <Users2 className="mr-2 h-4 w-4" />
-          Social
+          <Settings className="h-4 w-4" />
+          <span>Paramètres</span>
         </button>
-        <button
-          onClick={() => {}}
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "sm" }),
-            "justify-start",
-          )}
-        >
-          <AlertCircle className="mr-2 h-4 w-4" />
-          Urgent
-        </button>
-        <button
-          onClick={() => {}}
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "sm" }),
-            "justify-start",
-          )}
-        >
-          <MessagesSquare className="mr-2 h-4 w-4" />
-          Interne
-        </button>
-      </nav>
+      </div>
     </div>
   );
 }

@@ -30,6 +30,16 @@ export const mailSchema = z.object({
   recipientService: z.string().min(2, "Le service destinataire est requis"),
   object: z.string().min(5, "L'objet doit être explicite"),
 
+  // Informations de l'expéditeur
+  senderType: z
+    .enum(["PERSONNE", "ENTREPRISE", "ADMINISTRATION", "ONG", "AUTRE"])
+    .optional(),
+  officialName: z.string().optional(),
+  identificationNumber: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email().optional(),
+  emittedAt: z.date().optional(),
+
   // Classification
   type: mailTypeSchema,
   priority: mailPrioritySchema,
