@@ -84,7 +84,6 @@ const SERVICES_DATA = [
 const formSchema = mailSchema
   .pick({
     sender: true,
-    senderOrganization: true,
     recipientService: true,
     object: true,
     priority: true,
@@ -210,56 +209,7 @@ export function RegistrationForm({
     <div className="flex flex-col h-full">
       {/* Header with stepper */}
       <div className="px-6 py-4 border-b space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold text-lg">Nouveau Courrier</h2>
-          <div className="flex items-center gap-2">
-            {step === 1 ? (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={onCancel}
-                  className="gap-1.5"
-                >
-                  Annuler
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={handleNextStep}
-                >
-                  Suivant
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => setStep(1)}
-                >
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                  Retour
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="gap-1.5"
-                  disabled={isSubmitting || !scannedFile}
-                  onClick={form.handleSubmit(onSubmit)}
-                >
-                  {isSubmitting ? "Traitement..." : "Valider"}
-                  {!isSubmitting && <CheckCircle2 className="h-3.5 w-3.5" />}
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
+        <h2 className="font-semibold text-lg">Nouveau Courrier</h2>
         {/* Stepper */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -395,15 +345,6 @@ export function RegistrationForm({
                   />
                 </div>
               </div>
-
-              <div className="space-y-1.5">
-                <Label>Organisation</Label>
-                <Input
-                  placeholder="Structure / Organisation"
-                  {...form.register("senderOrganization")}
-                  className="h-11"
-                />
-              </div>
             </div>
 
             <div className="h-px bg-border" />
@@ -415,77 +356,65 @@ export function RegistrationForm({
                 Destinataire
               </div>
 
-              <div className="space-y-1.5">
-                <Label>Service destinataire *</Label>
-                <Select onValueChange={handleServiceChange}>
-                  <SelectTrigger className="w-full data-[size=default]:h-11">
-                    <SelectValue placeholder="Choisir un service..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SERVICES_DATA.map((service) => (
-                      <SelectItem key={service.id} value={service.id}>
-                        {service.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.recipientService && (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.recipientService.message}
-                  </p>
-                )}
-              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label>Service destinataire *</Label>
+                  <Select onValueChange={handleServiceChange}>
+                    <SelectTrigger className="w-full data-[size=default]:h-11">
+                      <SelectValue placeholder="Choisir un service..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SERVICES_DATA.map((service) => (
+                        <SelectItem key={service.id} value={service.id}>
+                          {service.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {form.formState.errors.recipientService && (
+                    <p className="text-xs text-destructive">
+                      {form.formState.errors.recipientService.message}
+                    </p>
+                  )}
+                </div>
 
-              <div className="space-y-1.5">
-                <Label>Personne destinataire</Label>
-                <Select
-                  disabled={!selectedServiceId}
-                  onValueChange={(val) => form.setValue("recipientPerson", val)}
-                >
-                  <SelectTrigger className="w-full data-[size=default]:h-11">
-                    <SelectValue
-                      placeholder={
-                        selectedServiceId
-                          ? "Choisir une personne..."
-                          : "Sélectionnez d'abord un service"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">
-                      <span className="font-medium">👥 Tout le service</span>
-                    </SelectItem>
-                    {selectedService?.personnel.map((person) => (
-                      <SelectItem key={person.id} value={person.id}>
-                        {person.name}
+                <div className="space-y-1.5">
+                  <Label>Personne destinataire</Label>
+                  <Select
+                    disabled={!selectedServiceId}
+                    onValueChange={(val) =>
+                      form.setValue("recipientPerson", val)
+                    }
+                  >
+                    <SelectTrigger className="w-full data-[size=default]:h-11">
+                      <SelectValue
+                        placeholder={
+                          selectedServiceId
+                            ? "Choisir une personne..."
+                            : "Sélectionnez d'abord un service"
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">
+                        <span className="font-medium">👥 Tout le service</span>
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                      {selectedService?.personnel.map((person) => (
+                        <SelectItem key={person.id} value={person.id}>
+                          {person.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
-
             <div className="h-px bg-border" />
-
             {/* ── Section: Courrier ── */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 <Building2 className="h-4 w-4" />
                 Courrier
-              </div>
-
-              <div className="space-y-1.5">
-                <Label>Objet *</Label>
-                <Textarea
-                  className="min-h-[100px]"
-                  placeholder="Objet du courrier..."
-                  {...form.register("object")}
-                />
-                {form.formState.errors.object && (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.object.message}
-                  </p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -541,6 +470,20 @@ export function RegistrationForm({
                     </div>
                   );
                 })()}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Objet *</Label>
+                <Textarea
+                  className="min-h-[100px]"
+                  placeholder="Objet du courrier..."
+                  {...form.register("object")}
+                />
+                {form.formState.errors.object && (
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.object.message}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -616,6 +559,47 @@ export function RegistrationForm({
               </button>
             )}
           </div>
+        )}
+      </div>
+
+      {/* Footer with action buttons */}
+      <div className="px-6 py-4 border-t flex items-center justify-end gap-2">
+        {step === 1 ? (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              className="px-4"
+              onClick={onCancel}
+            >
+              Annuler
+            </Button>
+            <Button type="button" className="px-4" onClick={handleNextStep}>
+              Suivant
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              className="px-4"
+              onClick={() => setStep(1)}
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              Retour
+            </Button>
+            <Button
+              type="button"
+              className="px-4"
+              disabled={isSubmitting || !scannedFile}
+              onClick={form.handleSubmit(onSubmit)}
+            >
+              {isSubmitting ? "Traitement..." : "Valider"}
+              {!isSubmitting && <CheckCircle2 className="h-3.5 w-3.5" />}
+            </Button>
+          </>
         )}
       </div>
     </div>
