@@ -42,7 +42,7 @@ export default function NavMenuItem({
         <button
           onClick={onToggle}
           className={clsx(
-            "flex gap-x-2 items-center px-2 py-2.5 rounded-lg w-full text-[13px] hover:bg-slate-100 relative",
+            "flex gap-x-2 items-center px-2 py-2.5 rounded-lg w-full text-[13px] hover:bg-slate-100 relative cursor-pointer",
             { "bg-sky-100 text-sky-700": isActive },
           )}
         >
